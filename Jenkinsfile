@@ -2,42 +2,41 @@ pipeline {
     agent any
 
     environment {
-        // Name of the SonarQube server configured in Jenkins
-        SONARQUBE_SERVER = 'My SonarQube Server'
-
-        // Optional: You can store your token as a Jenkins Secret Text credential
-        // and reference it here with credentials('sonar-token-id')
-        SONAR_TOKEN = 'squ_cbd3ad7e63e69ad61a1c953b1b0b3451811e0407'
+        // Replace this with your actual SonarQube token
+        SONAR_TOKEN = "squ_cbd3ad7e63e69ad61a1c953b1b0b3451811e0407"
+        SONAR_HOST = "http://localhost:9000"
+        PROJECT_KEY = "sonar-demo"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Clone your GitHub repo
-                git 'https://github.com/rukaiya14/sonar-test.git'
+                echo "Checking out code from GitHub..."
+                git branch: 'main', url: 'https://github.com/rukaiya14/sonar-test.git'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                // Wrap analysis in Jenkins SonarQube environment
-                withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    // Run the scanner using your token
-                    bat """
-                    sonar-scanner ^
-                    -Dsonar.projectKey=sonar-demo ^
-                    -Dsonar.sources=. ^
-                    -Dsonar.host.url=http://localhost:9000 ^
-                    -Dsonar.token=${SONAR_TOKEN}
-                    """
-                }
+                echo "Starting SonarQube Analysis..."
+                // Run SonarScanner CLI
+                bat """
+                sonar-scanner ^
+                -Dsonar.projectKey=%PROJECT_KEY% ^
+                -Dsonar.sources=. ^
+                -Dsonar.host.url=%SONAR_HOST% ^
+                -Dsonar.login=%SONAR_TOKEN%
+                """
             }
         }
     }
 
     post {
-        always {
-            echo 'SonarQube analysis finished. Check your dashboard at http://localhost:9000/dashboard?id=sonar-demo'
+        success {
+            echo "SonarQube analysis completed successfully!"
+        }
+        failure {
+            echo "Build failed. Check the console output for details."
         }
     }
 }
